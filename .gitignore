@@ -1,0 +1,57 @@
+# Data directories and large files
+data/
+*.jpg
+*.png
+*.jpeg
+*.nii.gz
+*.dcm
+
+# Model files
+models/
+*.h5
+*.keras
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+
+# Results and output
+results/
+outputs/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE/editor
+.idea/
+.vscode/
+
+# System files
+.DS_Store
+
+# Temporary files
+*.swp
+*.swo
+*~
+.tmp/
+tmp/
+
+# Logs
+*.log
