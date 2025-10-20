@@ -36,7 +36,8 @@ This work was completed as a **group project** for the Pattern Recognition cours
 
 ## 📊 Project Notebooks
 
-All notebooks are available on Kaggle with complete outputs, visualizations, and interactive code.
+This repository currently includes two segmentation notebooks—one deep learning (U‑Net) and one traditional thresholding approach.
+The additional notebooks for U‑Net mask prediction and classification (both U‑Net and thresholding) are available on Kaggle.
 
 ### Segmentation Pipeline
 
@@ -309,17 +310,15 @@ jupyter notebook notebooks/
 
 ```
 brain-tumor-detection/
-├── notebooks/                                    # Jupyter notebooks
-│   ├── trainingunetbraintumor.ipynb             # U-Net training
-│   ├── u-net-mask-prediction-brain-tumor.ipynb  # Mask generation
-│   ├── braintumorthresholding.ipynb             # Threshold segmentation
-│   ├── pp-finalproject-braintumordetection.ipynb        # U-Net classification
-│   └── pp-finalproject-braintumordetection-threshold.ipynb  # Threshold classification
-├── Group-3-Final-Report-Pattern-Recognition-Final-Project.pdf  # IEEE format report
-├── requirements.txt                              # Python dependencies
-├── README.md                                     # This file
-├── LICENSE                                       # MIT License
-└── .gitignore                                    # Git ignore rules
+├── notebooks/
+│   ├── trainingunetbraintumor.ipynb      # U‑Net training notebook
+│   └── braintumorthresholding.ipynb      # Threshold segmentation notebook
+├── Group‑3‑Final‑Report‑Pattern‑Recognition‑Final‑Project.pdf
+├── requirements.txt
+├── LICENSE
+├── .gitignore
+└── README.md
+
 ```
 
 ---
