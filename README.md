@@ -76,7 +76,7 @@ The additional notebooks for Uâ€‘Net mask prediction and classification (both Uâ
 
 A complete **IEEE-format technical report** documenting this project is available in this repository:
 
-**[Group-3-Final-Report-Pattern-Recognition-Final-Project.pdf](Group-3-Final-Report-Pattern-Recognition-Final-Project.pdf)**
+**[View Technical Report (PDF)](Group%203%20-%20Final%20Report%20-%20Pattern%20Recognition%20Final%20Project.pdf)**
 
 The report includes:
 - Comprehensive literature review
