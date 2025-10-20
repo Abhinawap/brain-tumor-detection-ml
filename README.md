@@ -258,6 +258,12 @@ Advanced texture and spatial feature extraction from segmented tumor regions:
 - **Format**: Grayscale MRI scans, resized to 128×128 pixels
 - **Preprocessing**: Wiener filtering, CLAHE, normalization, augmentation
 
+### Additional Dataset Used for U-Net Training
+
+The U-Net segmentation model was trained using the **[Brain Tumor Segmentation Dataset by Atika Akter](https://www.kaggle.com/datasets/atikaakter11/brain-tumor-segmentation-dataset)** available on Kaggle.  
+This dataset provides paired MRI images and segmentation masks, enabling supervised learning for tumor boundary detection.  
+Each sample contains both the MRI scan and its ground truth mask, allowing the model to learn pixel-level segmentation before being applied to the main brain tumor MRI dataset for classification.
+
 ---
 
 ## 🚀 How to Reproduce
