@@ -1,57 +1,46 @@
-# Data directories and large files
-data/
+# Data
+data/raw/
+data/processed/
 *.jpg
 *.png
-*.jpeg
-*.nii.gz
-*.dcm
+*.npy
 
-# Model files
+# Models
 models/
 *.h5
-*.keras
-*.pkl
-*.joblib
-*.pt
 *.pth
-*.onnx
+*.pkl
 
-# Results and output
-results/
-outputs/
-*.zip
+# MLflow
+mlruns/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Ignore notebooks in ROOT directory only (the messy ones)
+/*.ipynb
+
+# notebooks/ folder is ALLOWED for clean demo notebooks
+# We'll add polished notebooks there later
 
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.coverage
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb_checkpoints
-
-# Virtual environments
-env/
+# Virtual environment
 venv/
-ENV/
-env.bak/
-venv.bak/
+env/
+.venv/
 
-# IDE/editor
-.idea/
+# IDEs
 .vscode/
-
-# System files
-.DS_Store
-
-# Temporary files
+.idea/
 *.swp
-*.swo
-*~
-.tmp/
-tmp/
 
-# Logs
-*.log
+# OS
+.DS_Store
+Thumbs.db
