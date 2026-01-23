@@ -13,5 +13,5 @@ setup(
         "scikit-learn>=1.3.0",
         "mlflow>=2.8.0",
     ],
-    python_requires=">=3.11",
+    python_requires=">=3.10",
 )
