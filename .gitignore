@@ -44,3 +44,11 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Training artifacts
+training.log
+training_mlflow.log
+*.log
+
+# MLflow database
+mlflow.db
