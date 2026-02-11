@@ -85,7 +85,7 @@ python experiments/train_segmentation.py \
 
 # View results in MLflow
 mlflow ui
-
+```
 
 ## 🧪 Development Status
 
