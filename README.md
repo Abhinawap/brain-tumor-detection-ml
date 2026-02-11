@@ -2,6 +2,10 @@
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0-red.svg)](https://pytorch.org/)
+[![Tests](https://github.com/Abhinawap/brain-tumor-detection-ml/actions/workflows/tests.yml/badge.svg)](https://github.com/Abhinawap/brain-tumor-detection-ml/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 
 > **Note:** Original research notebooks preserved in [`archive/original-notebooks`](../../tree/archive/original-notebooks) branch.
 
@@ -39,8 +43,18 @@ End-to-end PyTorch pipeline for brain tumor segmentation and classification from
 *Smooth convergence with no overfitting. Training loss: 0.021 | Validation loss: 0.074*
 </details>
 
+## 🌟 Project Highlights
 
-## 🏗️ Tech Stack
+This project demonstrates **production ML engineering practices**:
+
+- **🔬 Research to Production**: Transformed academic notebook into modular, tested codebase
+- **📊 Experiment Tracking**: Complete MLflow integration with automated metric logging
+- **🧪 Test Coverage**: Comprehensive pytest suite for data, models, and metrics
+- **📈 Strong Performance**: 87.95% Dice coefficient on brain tumor segmentation
+- **📓 Reproducibility**: Documented training process with example notebooks
+- **🔄 CI/CD**: Automated testing with GitHub Actions on every commit
+
+## Tech Stack
 
 - **Deep Learning:** PyTorch 2.0
 - **Preprocessing:** OpenCV, scikit-image
@@ -87,7 +101,7 @@ python experiments/train_segmentation.py \
 mlflow ui
 ```
 
-## 🎨 Demo Notebook
+## Demo Notebook
 
 See the model in action: **[notebooks/demo_segmentation.ipynb](notebooks/demo_segmentation.ipynb)**
 
@@ -110,15 +124,16 @@ The notebook demonstrates:
 
 ### Roadmap
 
-- [x] Preprocessing pipeline (Wiener, CLAHE, cropping)
-- [x] PyTorch U-Net architecture
-- [x] Custom metrics (Dice, IoU) & losses
-- [x] Training script with MLflow
-- [x] Unit tests (pytest)
-- [ ] Feature extraction module (in progress)
-- [ ] Classification pipeline (planned)
-- [ ] Inference demo notebook (next)
-- [ ] GitHub Actions CI/CD (planned)
+- [x] Preprocessing pipeline (Wiener, CLAHE, cropping) ✅
+- [x] PyTorch U-Net architecture ✅
+- [x] Custom metrics (Dice, IoU) & losses ✅
+- [x] Training script with MLflow ✅
+- [x] Unit tests (pytest) ✅
+- [x] Inference demo notebook ✅
+- [x] Example visualizations ✅
+- [x] GitHub Actions CI/CD ✅
+- [ ] Feature extraction module
+- [ ] Classification pipeline
 
 ## Academic Context
 
