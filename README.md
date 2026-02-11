@@ -87,6 +87,21 @@ python experiments/train_segmentation.py \
 mlflow ui
 ```
 
+## 🎨 Demo Notebook
+
+See the model in action: **[notebooks/demo_segmentation.ipynb](notebooks/demo_segmentation.ipynb)**
+
+The notebook demonstrates:
+- Loading trained model from checkpoint
+- Running inference on brain MRI images
+- Side-by-side visualization: Original | Ground Truth | Prediction
+- Quantitative metrics calculation (Dice, IoU)
+- Performance evaluation across multiple samples
+
+**Sample output:**
+
+![Inference Example](docs/inference_examples/sample_1685_dice0.973.png)
+
 ## 🧪 Development Status
 
 **Current Phase:** ✅ Segmentation pipeline complete  
