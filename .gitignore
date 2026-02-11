@@ -7,6 +7,7 @@ data/processed/
 
 !docs/*.png
 !docs/*.jpg
+!docs/inference_examples/*.png
 
 # Models
 /models/
