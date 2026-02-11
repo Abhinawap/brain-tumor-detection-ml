@@ -15,8 +15,8 @@ End-to-end PyTorch pipeline for brain tumor segmentation and classification from
 
 **Trained U-Net Model Performance** (50 epochs on 2,500+ brain MRI scans):
 
-| Metric | Score | Status |
-|--------|-------|--------|
+| Metric | Score |
+|--------|-------|
 | **Validation Dice** | **87.95%** |
 | **Validation IoU** | **79.93%** |
 | **Validation Accuracy** | **99.60%** |
