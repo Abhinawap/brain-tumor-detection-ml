@@ -5,19 +5,40 @@
 
 > **Note:** Original research notebooks preserved in [`archive/original-notebooks`](../../tree/archive/original-notebooks) branch.
 
-## 🎯 Project Overview
+## Project Overview
 
 End-to-end PyTorch pipeline for brain tumor segmentation and classification from MRI scans.
 
 **Architecture:** Raw MRI → Preprocessing → U-Net Segmentation → Feature Extraction → Classification
 
-## 📊 Target Performance
+## Results
 
-| Task | Model | Metric | Target |
-|------|-------|--------|--------|
-| Segmentation | U-Net | Dice | 92%+ |
-| Segmentation | U-Net | IoU | 90%+ |
-| Classification | Gradient Boosting | F1 | 94%+ |
+**Trained U-Net Model Performance** (50 epochs on 2,500+ brain MRI scans):
+
+| Metric | Score | Status |
+|--------|-------|--------|
+| **Validation Dice** | **87.95%** |
+| **Validation IoU** | **79.93%** |
+| **Validation Accuracy** | **99.60%** |
+| **Validation Sensitivity** | **87.92%** |
+| **Validation Specificity** | **99.84%** |
+
+**Training Configuration:**
+- Loss Function: BCEDiceLoss (α=0.5)
+- Optimizer: Adam (lr=1e-4)
+- Batch Size: 16
+- Image Size: 128×128
+- Experiment Tracking: MLflow
+
+<details>
+<summary>View Training Curves</summary>
+
+![Model Metrics 1](docs/Unet-model-metrics1.png)
+![Model Metrics 2](docs/Unet-model-metrics2.png)
+
+*Smooth convergence with no overfitting. Training loss: 0.021 | Validation loss: 0.074*
+</details>
+
 
 ## 🏗️ Tech Stack
 
@@ -49,35 +70,44 @@ Original research: archive/original-notebooks branch
 
 ```bash
 # Clone
-git clone https://github.com/yourusername/brain-tumor-segmentation.git
-cd brain-tumor-segmentation
+git clone https://github.com/Abhinawap/brain-tumor-detection-ml.git
+cd brain-tumor-detection-ml
 
-# Install
+# Install dependencies
 pip install -r requirements.txt
 
-# Train (coming soon)
-python experiments/train_segmentation.py
-```
+# Train model
+python experiments/train_segmentation.py \
+  --epochs 50 \
+  --batch-size 16 \
+  --lr 1e-4 \
+  --device cuda
+
+# View results in MLflow
+mlflow ui
+
 
 ## 🧪 Development Status
 
-**Current Phase:** Week 1/3 - Core refactoring  
-**Next Milestone:** Complete U-Net implementation + MLflow integration
+**Current Phase:** ✅ Segmentation pipeline complete  
+**Next Milestone:** Create inference demo notebook + feature extraction module  
+**Last Training Run:** January 26, 2026
 
 ### Roadmap
 
-- [ ] Preprocessing pipeline (Wiener, CLAHE, cropping)
-- [ ] PyTorch U-Net architecture
-- [ ] Custom metrics (Dice, IoU) & losses
-- [ ] Training script with MLflow
-- [ ] Feature extraction module
-- [ ] Classification pipeline
-- [ ] Unit tests + CI/CD
-- [ ] End-to-end inference pipeline
+- [x] Preprocessing pipeline (Wiener, CLAHE, cropping)
+- [x] PyTorch U-Net architecture
+- [x] Custom metrics (Dice, IoU) & losses
+- [x] Training script with MLflow
+- [x] Unit tests (pytest)
+- [ ] Feature extraction module (in progress)
+- [ ] Classification pipeline (planned)
+- [ ] Inference demo notebook (next)
+- [ ] GitHub Actions CI/CD (planned)
 
-## 📚 Academic Context
+## Academic Context
 
-This project evolved from a Pattern Recognition course final project (Dec 2025 - Jan 2026).
+This project evolved from a Pattern Recognition course final project (June 2025).
 
 **Refactoring demonstrates:**
 - Research-to-production code transformation
@@ -93,5 +123,5 @@ MIT
 
 ---
 
-**Last Updated:** January 22, 2026 
-**Status:** 🚧 Active refactoring in progress
+**Last Updated:** February 11, 2026 
+**Status:** ✅ Segmentation pipeline functional | 🚧 Classification pipeline in development

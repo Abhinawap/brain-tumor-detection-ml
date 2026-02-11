@@ -71,9 +71,10 @@ class MLflowTrainer:
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.log_interval = log_interval
-
+        
         self.metrics = SegmentationMetrics()
         self.best_val_dice = 0.0
+        
 
         # Training history
         self.history = {
@@ -150,21 +151,21 @@ class MLflowTrainer:
             images = images.to(self.device)
             masks = masks.to(self.device)
 
-            # Forward pass
+            
             outputs = self.model(images)
             loss = self.criterion(outputs, masks)
 
-            # Calculate metrics
+            
             batch_metrics = self.metrics(outputs, masks)
 
-            # Accumulate
+            
             total_loss += loss.item()
             for key in all_metrics:
                 all_metrics[key] += batch_metrics[key]
 
             pbar.set_postfix({'dice': f'{batch_metrics["dice"]:.4f}'})
 
-        # Average metrics
+        
         avg_loss = total_loss / len(self.val_loader)
         for key in all_metrics:
             all_metrics[key] /= len(self.val_loader)
@@ -189,16 +190,16 @@ class MLflowTrainer:
             'history': self.history
         }
 
-        # Save latest checkpoint
+        
         latest_path = self.checkpoint_dir / 'latest_checkpoint.pth'
         torch.save(checkpoint, latest_path)
 
-        # Save best checkpoint
+        
         if is_best:
             best_path = self.checkpoint_dir / 'best_model.pth'
             torch.save(checkpoint, best_path)
 
-            # Log best model to MLflow
+            
             mlflow.pytorch.log_model(self.model, "best_model")
             print(f'✓ Saved best model (Dice: {metrics["dice"]:.4f})')
 
@@ -216,17 +217,15 @@ class MLflowTrainer:
         print("=" * 60)
 
         for epoch in range(num_epochs):
-            # Train
+            
             train_loss = self.train_epoch(epoch)
             self.history['train_loss'].append(train_loss)
 
-            # Validate
             val_metrics = self.validate(epoch)
             self.history['val_loss'].append(val_metrics['loss'])
             self.history['val_dice'].append(val_metrics['dice'])
             self.history['val_iou'].append(val_metrics['iou'])
 
-            # Log epoch metrics to MLflow
             mlflow.log_metric('train_loss', train_loss, step=epoch)
             mlflow.log_metric('val_loss', val_metrics['loss'], step=epoch)
             mlflow.log_metric('val_dice', val_metrics['dice'], step=epoch)
@@ -234,8 +233,7 @@ class MLflowTrainer:
             mlflow.log_metric('val_accuracy', val_metrics['accuracy'], step=epoch)
             mlflow.log_metric('val_sensitivity', val_metrics['sensitivity'], step=epoch)
             mlflow.log_metric('val_specificity', val_metrics['specificity'], step=epoch)
-
-            # Print epoch summary
+ 
             print(f"\nEpoch {epoch+1}/{num_epochs}")
             print(f"  Train Loss: {train_loss:.4f}")
             print(f"  Val Loss:   {val_metrics['loss']:.4f}")
@@ -243,7 +241,6 @@ class MLflowTrainer:
             print(f"  Val IoU:    {val_metrics['iou']:.4f}")
             print(f"  Val Acc:    {val_metrics['accuracy']:.4f}")
 
-            # Save checkpoint
             is_best = val_metrics['dice'] > self.best_val_dice
             if is_best:
                 self.best_val_dice = val_metrics['dice']
@@ -254,7 +251,6 @@ class MLflowTrainer:
         print(f"\nTraining complete!")
         print(f"Best Val Dice: {self.best_val_dice:.4f}")
 
-        # Log final best metric
         mlflow.log_metric('best_val_dice', self.best_val_dice)
 
 
@@ -262,7 +258,6 @@ def main():
     """Main training function with MLflow tracking."""
     parser = argparse.ArgumentParser(description='Train U-Net for brain tumor segmentation with MLflow')
 
-    # Data arguments
     parser.add_argument('--data-dir', type=str, 
                         default='data/raw/Brain-Tumor-Segmentation-Dataset',
                         help='Path to dataset')
@@ -271,7 +266,6 @@ def main():
     parser.add_argument('--classes', type=int, nargs='+', default=[1, 2, 3],
                         help='Classes to include (default: 1 2 3, excluding no-tumor)')
 
-    # Training arguments
     parser.add_argument('--epochs', type=int, default=50,
                         help='Number of epochs (default: 50)')
     parser.add_argument('--batch-size', type=int, default=16,

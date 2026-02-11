@@ -49,7 +49,6 @@ class TestUNetArchitecture:
         """Test U-Net with different input sizes."""
         model = UNet(in_channels=3, out_channels=1)
 
-        # Test multiple sizes
         for size in [64, 128, 256]:
             x = torch.randn(1, 3, size, size)
             output = model(x)
@@ -69,7 +68,6 @@ class TestUNetArchitecture:
         model = UNet(in_channels=3, out_channels=1, features=64)
         param_count = model.count_parameters()
 
-        # U-Net should have millions of parameters but not too many
         assert 1_000_000 < param_count < 100_000_000
 
     def test_unet_gradient_flow(self):
@@ -81,7 +79,6 @@ class TestUNetArchitecture:
         loss = output.sum()
         loss.backward()
 
-        # Check that input has gradients
         assert x.grad is not None
 
 
@@ -104,9 +101,7 @@ class TestUNetComponents:
 
         down, skip = encoder(x)
 
-        # Downsampled output is half size
         assert down.shape == (2, 64, 64, 64)
-        # Skip connection preserves input size
         assert skip.shape == (2, 64, 128, 128)
 
     def test_decoder_block(self):
@@ -117,7 +112,6 @@ class TestUNetComponents:
 
         output = decoder(x, skip)
 
-        # Output should match skip connection size
         assert output.shape == (2, 64, 64, 64)
 
 
@@ -140,7 +134,6 @@ class TestSegmentationMetrics:
 
         dice = dice_coefficient(pred, target)
 
-        # Should be close to 0 (with smoothing)
         assert dice < 0.01
 
     def test_iou_score_perfect(self):
@@ -159,12 +152,10 @@ class TestSegmentationMetrics:
 
         acc = pixel_accuracy(pred, target, threshold=0.5)
 
-        # All 4 pixels should be correct
         assert torch.isclose(acc, torch.tensor(1.0))
 
     def test_sensitivity(self):
         """Test sensitivity (recall) calculation."""
-        # Perfect sensitivity case
         pred = torch.ones(2, 1, 64, 64)
         target = torch.ones(2, 1, 64, 64)
 
@@ -174,7 +165,6 @@ class TestSegmentationMetrics:
 
     def test_specificity(self):
         """Test specificity calculation."""
-        # Perfect specificity case
         pred = torch.zeros(2, 1, 64, 64)
         target = torch.zeros(2, 1, 64, 64)
 
@@ -190,14 +180,12 @@ class TestSegmentationMetrics:
 
         results = metrics(pred, target)
 
-        # Check all metrics are present
         assert 'dice' in results
         assert 'iou' in results
         assert 'accuracy' in results
         assert 'sensitivity' in results
         assert 'specificity' in results
 
-        # Check all values are valid
         for value in results.values():
             assert 0.0 <= value <= 1.0
 
@@ -213,7 +201,6 @@ class TestLossFunctions:
 
         loss = criterion(pred, target)
 
-        # Perfect prediction should have loss close to 0
         assert loss < 0.01
 
     def test_dice_loss_worst(self):
@@ -224,7 +211,6 @@ class TestLossFunctions:
 
         loss = criterion(pred, target)
 
-        # Worst prediction should have loss close to 1
         assert loss > 0.99
 
     def test_bce_dice_loss(self):
@@ -235,7 +221,6 @@ class TestLossFunctions:
 
         loss = criterion(pred, target)
 
-        # Loss should be scalar and positive
         assert loss.ndim == 0
         assert loss > 0
 
@@ -244,12 +229,10 @@ class TestLossFunctions:
         pred = torch.rand(2, 1, 64, 64)
         target = torch.randint(0, 2, (2, 1, 64, 64)).float()
 
-        # Different alpha values should produce different losses
         loss_0 = BCEDiceLoss(alpha=0.0)(pred, target)
         loss_5 = BCEDiceLoss(alpha=0.5)(pred, target)
         loss_1 = BCEDiceLoss(alpha=1.0)(pred, target)
 
-        # All should be different
         assert not torch.isclose(loss_0, loss_5)
         assert not torch.isclose(loss_5, loss_1)
 
@@ -261,13 +244,11 @@ class TestLossFunctions:
 
         loss = criterion(pred, target)
 
-        # Loss should be scalar and positive
         assert loss.ndim == 0
         assert loss > 0
 
     def test_loss_factory(self):
         """Test loss function factory."""
-        # Test all supported loss functions
         for loss_name in ['bce', 'dice', 'bce_dice', 'focal']:
             criterion = get_loss_function(loss_name)
             assert criterion is not None
@@ -283,24 +264,20 @@ class TestIntegration:
 
     def test_training_step(self):
         """Test a complete training step."""
-        # Setup
         model = UNet(in_channels=3, out_channels=1)
         criterion = BCEDiceLoss(alpha=0.5)
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
-        # Forward pass
         x = torch.rand(2, 3, 128, 128)
         target = torch.randint(0, 2, (2, 1, 128, 128)).float()
 
         pred = model(x)
         loss = criterion(pred, target)
 
-        # Backward pass
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        # Check everything ran without errors
         assert loss.item() > 0
 
     def test_evaluation_step(self):
@@ -316,7 +293,6 @@ class TestIntegration:
             pred = model(x)
             results = metrics(pred, target)
 
-        # Check all metrics are computed
         assert len(results) == 5
         assert all(0 <= v <= 1 for v in results.values())
 

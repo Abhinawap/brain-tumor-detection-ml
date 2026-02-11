@@ -26,11 +26,9 @@ class TestNormalization:
 
     def test_normalize_image_range(self):
         """Test that normalized values are in [0, 1] range."""
-        # Create image with varying values (0 to 255)
         img = np.random.randint(0, 256, (128, 128, 3), dtype=np.uint8)
         normalized = normalize_image(img)
         
-        # Check values are in valid range
         assert 0.0 <= normalized.min() <= 1.0
         assert 0.0 <= normalized.max() <= 1.0
         assert normalized.max() > normalized.min()
@@ -99,19 +97,17 @@ class TestBrainCropping:
 
     def test_crop_without_mask(self):
         """Test cropping without mask."""
-        # Create synthetic brain-like image (white circle on black background)
         img = np.zeros((256, 256, 3), dtype=np.uint8)
         cv2.circle(img, (128, 128), 80, (200, 200, 200), -1)
 
         cropped, mask_out = crop_brain_region(img, mask=None)
 
-        assert cropped.shape[0] < img.shape[0]  # Should be smaller
+        assert cropped.shape[0] < img.shape[0]
         assert cropped.shape[1] < img.shape[1]
         assert mask_out is None
 
     def test_crop_with_mask(self):
         """Test cropping with mask."""
-        # Create synthetic brain image and mask
         img = np.zeros((256, 256, 3), dtype=np.uint8)
         mask = np.zeros((256, 256, 1), dtype=np.uint8)
         cv2.circle(img, (128, 128), 80, (200, 200, 200), -1)
@@ -132,7 +128,6 @@ class TestBrainCropping:
         cropped_no_margin, _ = crop_brain_region(img, margin=0)
         cropped_with_margin, _ = crop_brain_region(img, margin=10)
 
-        # With margin should be slightly larger
         assert cropped_with_margin.shape[0] >= cropped_no_margin.shape[0]
         assert cropped_with_margin.shape[1] >= cropped_no_margin.shape[1]
 
@@ -142,7 +137,6 @@ class TestBrainCropping:
 
         cropped, _ = crop_brain_region(img)
 
-        # Should return original image if no contours found
         assert cropped.shape == img.shape
 
 
@@ -151,17 +145,14 @@ class TestIntegration:
 
     def test_full_preprocessing_pipeline(self):
         """Test complete preprocessing workflow."""
-        # Create synthetic MRI image
         img = np.random.randint(50, 200, (256, 256, 3), dtype=np.uint8)
         cv2.circle(img, (128, 128), 80, (180, 180, 180), -1)
 
-        # Apply full pipeline
         img_cropped, _ = crop_brain_region(img)
         img_filtered = apply_wiener_filter(img_cropped)
         img_enhanced = apply_clahe(img_filtered)
         img_normalized = normalize_image(img_enhanced)
 
-        # Final checks
         assert img_normalized.dtype == np.float32
         assert 0.0 <= img_normalized.min() <= img_normalized.max() <= 1.0
         assert img_normalized.shape[2] == 3

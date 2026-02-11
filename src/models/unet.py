@@ -143,14 +143,12 @@ class DecoderBlock(nn.Module):
         """
         x = self.upconv(x)
 
-        # Handle potential size mismatch due to odd dimensions
         if x.shape != skip.shape:
             diff_h = skip.shape[2] - x.shape[2]
             diff_w = skip.shape[3] - x.shape[3]
             x = nn.functional.pad(x, [diff_w // 2, diff_w - diff_w // 2,
                                       diff_h // 2, diff_h - diff_h // 2])
 
-        # Concatenate skip connection
         x = torch.cat([x, skip], dim=1)
         x = self.conv_block(x)
         return x
@@ -197,22 +195,18 @@ class UNet(nn.Module):
     def __init__(self, in_channels: int = 3, out_channels: int = 1, features: int = 64):
         super(UNet, self).__init__()
 
-        # Encoder
         self.encoder1 = EncoderBlock(in_channels, features)
         self.encoder2 = EncoderBlock(features, features * 2)
         self.encoder3 = EncoderBlock(features * 2, features * 4)
         self.encoder4 = EncoderBlock(features * 4, features * 8)
 
-        # Bottleneck
         self.bottleneck = ConvBlock(features * 8, features * 16)
 
-        # Decoder
         self.decoder4 = DecoderBlock(features * 16, features * 8, features * 8)
         self.decoder3 = DecoderBlock(features * 8, features * 4, features * 4)
         self.decoder2 = DecoderBlock(features * 4, features * 2, features * 2)
         self.decoder1 = DecoderBlock(features * 2, features, features)
 
-        # Output layer
         self.output_conv = nn.Conv2d(features, out_channels, kernel_size=1)
         self.sigmoid = nn.Sigmoid()
 
@@ -226,24 +220,20 @@ class UNet(nn.Module):
         Returns:
             Segmentation mask of shape (batch_size, 1, H, W) with values in [0, 1]
         """
-        # Encoder with skip connections
-        enc1, skip1 = self.encoder1(x)      # 64 channels, 64x64
-        enc2, skip2 = self.encoder2(enc1)   # 128 channels, 32x32
-        enc3, skip3 = self.encoder3(enc2)   # 256 channels, 16x16
-        enc4, skip4 = self.encoder4(enc3)   # 512 channels, 8x8
+        enc1, skip1 = self.encoder1(x)
+        enc2, skip2 = self.encoder2(enc1)
+        enc3, skip3 = self.encoder3(enc2)
+        enc4, skip4 = self.encoder4(enc3)
 
-        # Bottleneck
-        bottleneck = self.bottleneck(enc4)  # 1024 channels, 8x8
+        bottleneck = self.bottleneck(enc4)
 
-        # Decoder with skip connections
-        dec4 = self.decoder4(bottleneck, skip4)  # 512 channels, 16x16
-        dec3 = self.decoder3(dec4, skip3)        # 256 channels, 32x32
-        dec2 = self.decoder2(dec3, skip2)        # 128 channels, 64x64
-        dec1 = self.decoder1(dec2, skip1)        # 64 channels, 128x128
+        dec4 = self.decoder4(bottleneck, skip4)
+        dec3 = self.decoder3(dec4, skip3)
+        dec2 = self.decoder2(dec3, skip2)
+        dec1 = self.decoder1(dec2, skip1)
 
-        # Output
-        output = self.output_conv(dec1)     # 1 channel, 128x128
-        output = self.sigmoid(output)       # [0, 1] range
+        output = self.output_conv(dec1)
+        output = self.sigmoid(output)
 
         return output
 
@@ -253,7 +243,6 @@ class UNet(nn.Module):
 
 
 if __name__ == "__main__":
-    # Quick test
     model = UNet(in_channels=3, out_channels=1)
     x = torch.randn(2, 3, 128, 128)
 

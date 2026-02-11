@@ -5,6 +5,9 @@ data/processed/
 *.png
 *.npy
 
+!docs/*.png
+!docs/*.jpg
+
 # Models
 /models/
 *.h5

@@ -60,11 +60,9 @@ def apply_clahe(img: np.ndarray, clip_limit: float = 1.75,
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
 
-    # Apply CLAHE to L-channel only
     clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
     cl = clahe.apply(l)
 
-    # Merge channels and convert back to BGR
     merged = cv2.merge([cl, a, b])
     return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
 
@@ -115,38 +113,30 @@ def crop_brain_region(img: np.ndarray, mask: Optional[np.ndarray] = None,
         >>> mask = cv2.imread('mask.jpg', cv2.IMREAD_GRAYSCALE)
         >>> cropped_img, cropped_mask = crop_brain_region(img, mask)
     """
-    # Convert to grayscale and apply Gaussian blur
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 
-    # Threshold to separate brain from background
     _, thresh = cv2.threshold(blurred, 45, 255, cv2.THRESH_BINARY)
 
-    # Morphological operations to clean up the mask
     thresh = cv2.erode(thresh, None, iterations=2)
     thresh = cv2.dilate(thresh, None, iterations=2)
 
-    # Find contours
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
     if not cnts:
         return (img, mask) if mask is not None else (img, None)
 
-    # Get bounding box of largest contour (brain region)
     c = max(cnts, key=cv2.contourArea)
     x, y, w, h = cv2.boundingRect(c)
 
-    # Add margin and ensure within image bounds
     x = max(x - margin, 0)
     y = max(y - margin, 0)
     w = min(w + 2 * margin, img.shape[1] - x)
     h = min(h + 2 * margin, img.shape[0] - y)
 
-    # Crop image
     img_cropped = img[y:y+h, x:x+w]
 
-    # Crop mask if provided
     if mask is not None:
         if len(mask.shape) == 2:
             mask = mask[..., np.newaxis]
@@ -190,8 +180,7 @@ def load_data(base_path: str, target_size: Tuple[int, int] = (128, 128)) -> Tupl
     images = []
     masks = []
 
-    # Iterate through tumor classes
-    for label in range(4):  # 0: No Tumor, 1: Glioma, 2: Meningioma, 3: Pituitary
+    for label in range(4):
         image_folder = os.path.join(base_path, 'image', str(label))
         mask_folder = os.path.join(base_path, 'mask', str(label))
 
@@ -202,40 +191,33 @@ def load_data(base_path: str, target_size: Tuple[int, int] = (128, 128)) -> Tupl
         for filename in os.listdir(image_folder):
             img_path = os.path.join(image_folder, filename)
 
-            # Construct mask filename (assuming format: filename -> filename_m.jpg)
             file_root, _ = os.path.splitext(filename)
             mask_path = os.path.join(mask_folder, f"{file_root}_m.jpg")
 
             if not os.path.exists(mask_path):
                 continue
 
-            # Load image and mask
             img = cv2.imread(img_path)
             mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 
             if img is None or mask is None:
                 continue
 
-            # Skip images with no tumor pixels
             if np.max(mask) == 0:
                 continue
 
-            # Crop brain region
             img, mask = crop_brain_region(img, mask)
 
             if img is None or img.size == 0 or mask is None or mask.size == 0:
                 continue
 
-            # Resize
             img = cv2.resize(img, target_size)
             mask = cv2.resize(mask, target_size)
 
-            # Apply preprocessing
             img = apply_wiener_filter(img)
             img = apply_clahe(img)
             img = normalize_image(img)
 
-            # Normalize mask to [0, 1] and add channel dimension
             mask = (mask > 0).astype(np.float32)[..., np.newaxis]
 
             images.append(img)
@@ -245,7 +227,6 @@ def load_data(base_path: str, target_size: Tuple[int, int] = (128, 128)) -> Tupl
 
 
 if __name__ == "__main__":
-    # Quick test
     print("Preprocessing module loaded successfully!")
     print("Available functions:")
     print("  - apply_wiener_filter()")

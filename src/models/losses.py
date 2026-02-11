@@ -49,18 +49,14 @@ class DiceLoss(nn.Module):
         Returns:
             Dice loss (scalar)
         """
-        # Flatten spatial dimensions
         pred = pred.view(pred.size(0), -1)
         target = target.view(target.size(0), -1)
 
-        # Calculate intersection and union
         intersection = (pred * target).sum(dim=1)
         union = pred.sum(dim=1) + target.sum(dim=1)
 
-        # Dice coefficient
         dice = (2.0 * intersection + self.smooth) / (union + self.smooth)
 
-        # Dice loss (1 - dice coefficient)
         dice_loss = 1.0 - dice.mean()
 
         return dice_loss
@@ -163,17 +159,13 @@ class FocalLoss(nn.Module):
         Returns:
             Focal loss (scalar)
         """
-        # BCE component
         bce_loss = F.binary_cross_entropy(pred, target, reduction='none')
 
-        # Focal component
         p_t = pred * target + (1 - pred) * (1 - target)
         focal_weight = (1 - p_t) ** self.gamma
 
-        # Alpha weighting
         alpha_t = self.alpha * target + (1 - self.alpha) * (1 - target)
 
-        # Focal loss
         focal_loss = alpha_t * focal_weight * bce_loss
 
         return focal_loss.mean()
@@ -211,28 +203,23 @@ def get_loss_function(loss_name: str = 'bce_dice', **kwargs):
 
 
 if __name__ == "__main__":
-    # Quick test
     pred = torch.rand(4, 1, 128, 128)
     target = torch.randint(0, 2, (4, 1, 128, 128)).float()
 
     print("Loss Functions Test:")
 
-    # Test Dice Loss
     dice_loss = DiceLoss()
     loss = dice_loss(pred, target)
     print(f"  Dice Loss: {loss.item():.4f}")
 
-    # Test BCE + Dice Loss
     bce_dice_loss = BCEDiceLoss(alpha=0.5)
     loss = bce_dice_loss(pred, target)
     print(f"  BCE+Dice Loss: {loss.item():.4f}")
 
-    # Test Focal Loss
     focal_loss = FocalLoss(alpha=0.25, gamma=2.0)
     loss = focal_loss(pred, target)
     print(f"  Focal Loss: {loss.item():.4f}")
 
-    # Test factory function
     criterion = get_loss_function('bce_dice', alpha=0.7)
     print(f"  Factory: {type(criterion).__name__}")
 

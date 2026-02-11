@@ -79,18 +79,15 @@ class BrainTumorDataset(Dataset):
         Find corresponding mask file for an image.
         Handles masks with same name or with '_m' suffix.
         """
-        # Try exact match first
         mask_path = mask_dir / image_path.name
         if mask_path.exists():
             return mask_path
 
-        # Try with _m suffix
         mask_name = image_path.stem + "_m" + image_path.suffix
         mask_path = mask_dir / mask_name
         if mask_path.exists():
             return mask_path
 
-        # Try .jpg extension if original was different
         mask_path = mask_dir / (image_path.stem + "_m.jpg")
         if mask_path.exists():
             return mask_path
@@ -103,7 +100,6 @@ class BrainTumorDataset(Dataset):
         mask_paths = []
 
         for class_idx in self.classes:
-            # Image directory for this class
             image_dir = self.data_dir / 'image' / str(class_idx)
             mask_dir = self.data_dir / 'mask' / str(class_idx)
 
@@ -111,9 +107,7 @@ class BrainTumorDataset(Dataset):
                 print(f"Warning: {image_dir} does not exist, skipping class {class_idx}")
                 continue
 
-            # Get all image files
             for img_path in sorted(image_dir.glob('*.jpg')):
-                # Find corresponding mask
                 mask_path = self._find_mask_path(img_path, mask_dir)
 
                 if mask_path is not None:
@@ -138,34 +132,25 @@ class BrainTumorDataset(Dataset):
             - image: (3, H, W) float32 tensor, values in [0, 1]
             - mask: (1, H, W) float32 tensor, values in {0, 1}
         """
-        # Load image and mask
         image = cv2.imread(str(self.image_paths[idx]))
         mask = cv2.imread(str(self.mask_paths[idx]), cv2.IMREAD_GRAYSCALE)
 
-        # Convert BGR to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Resize
         image = cv2.resize(image, (self.image_size, self.image_size))
         mask = cv2.resize(mask, (self.image_size, self.image_size))
 
-        # Apply transforms if provided
         if self.transform:
             transformed = self.transform(image=image, mask=mask)
             image = transformed['image']
             mask = transformed['mask']
 
-        # Normalize image to [0, 1]
         image = image.astype(np.float32) / 255.0
 
-        # Binarize mask (any non-zero value becomes 1)
         mask = (mask > 0).astype(np.float32)
 
-        # Convert to PyTorch tensors
-        # Image: (H, W, C) -> (C, H, W)
         image = torch.from_numpy(image).permute(2, 0, 1)
 
-        # Mask: (H, W) -> (1, H, W)
         mask = torch.from_numpy(mask).unsqueeze(0)
 
         return image, mask
@@ -227,53 +212,43 @@ class BrainTumorDatasetWithAugmentation(BrainTumorDataset):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Apply random augmentations to image and mask."""
 
-        # Horizontal flip
         if np.random.random() < self.aug_prob:
             image = cv2.flip(image, 1)
             mask = cv2.flip(mask, 1)
 
-        # Vertical flip
         if np.random.random() < self.aug_prob:
             image = cv2.flip(image, 0)
             mask = cv2.flip(mask, 0)
 
-        # Rotation (90, 180, 270 degrees)
         if np.random.random() < self.aug_prob:
-            k = np.random.choice([1, 2, 3])  # 90, 180, 270 degrees
+            k = np.random.choice([1, 2, 3])
             image = np.rot90(image, k)
             mask = np.rot90(mask, k)
 
         # Brightness adjustment
         if np.random.random() < self.aug_prob:
-            alpha = np.random.uniform(0.8, 1.2)  # Brightness factor
+            alpha = np.random.uniform(0.8, 1.2)
             image = np.clip(image * alpha, 0, 255).astype(np.uint8)
 
         return image, mask
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Load image and mask with augmentations."""
-        # Load image and mask
         image = cv2.imread(str(self.image_paths[idx]))
         mask = cv2.imread(str(self.mask_paths[idx]), cv2.IMREAD_GRAYSCALE)
 
-        # Convert BGR to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Resize
         image = cv2.resize(image, (self.image_size, self.image_size))
         mask = cv2.resize(mask, (self.image_size, self.image_size))
 
-        # Apply augmentations if enabled
         if self.augment:
             image, mask = self._apply_augmentations(image, mask)
 
-        # Normalize image to [0, 1]
         image = image.astype(np.float32) / 255.0
 
-        # Binarize mask
         mask = (mask > 0).astype(np.float32)
 
-        # Convert to PyTorch tensors
         image = torch.from_numpy(image).permute(2, 0, 1)
         mask = torch.from_numpy(mask).unsqueeze(0)
 
@@ -281,21 +256,18 @@ class BrainTumorDatasetWithAugmentation(BrainTumorDataset):
 
 
 if __name__ == "__main__":
-    # Quick test
     data_dir = "../data/raw/Brain-Tumor-Segmentation-Dataset"
 
     if os.path.exists(data_dir):
         dataset = BrainTumorDataset(data_dir, image_size=128)
         print(f"Dataset loaded: {len(dataset)} samples")
 
-        # Test loading one sample
         image, mask = dataset[0]
         print(f"Image shape: {image.shape}, dtype: {image.dtype}")
         print(f"Mask shape: {mask.shape}, dtype: {mask.dtype}")
         print(f"Image range: [{image.min():.3f}, {image.max():.3f}]")
         print(f"Mask unique values: {mask.unique().tolist()}")
 
-        # Class distribution
         dist = dataset.get_class_distribution()
         print(f"Class distribution: {dist}")
 

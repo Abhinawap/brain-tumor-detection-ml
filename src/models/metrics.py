@@ -42,15 +42,12 @@ def dice_coefficient(pred: torch.Tensor, target: torch.Tensor,
         >>> print(f"Dice: {dice:.3f}")
         Dice: 0.889
     """
-    # Flatten spatial dimensions
-    pred = pred.view(pred.size(0), -1)      # (batch, H*W)
-    target = target.view(target.size(0), -1)  # (batch, H*W)
+    pred = pred.view(pred.size(0), -1)
+    target = target.view(target.size(0), -1)
 
-    # Calculate intersection and union
     intersection = (pred * target).sum(dim=1)
     union = pred.sum(dim=1) + target.sum(dim=1)
 
-    # Dice coefficient
     dice = (2.0 * intersection + smooth) / (union + smooth)
 
     return dice.mean()
@@ -78,15 +75,12 @@ def iou_score(pred: torch.Tensor, target: torch.Tensor,
         >>> print(f"IoU: {iou:.3f}")
         IoU: 1.000
     """
-    # Flatten spatial dimensions
     pred = pred.view(pred.size(0), -1)
     target = target.view(target.size(0), -1)
 
-    # Calculate intersection and union
     intersection = (pred * target).sum(dim=1)
     union = pred.sum(dim=1) + target.sum(dim=1) - intersection
 
-    # IoU score
     iou = (intersection + smooth) / (union + smooth)
 
     return iou.mean()
@@ -114,10 +108,8 @@ def pixel_accuracy(pred: torch.Tensor, target: torch.Tensor,
         >>> print(f"Accuracy: {acc:.3f}")
         Accuracy: 1.000
     """
-    # Binarize predictions
     pred_binary = (pred > threshold).float()
 
-    # Calculate correct predictions
     correct = (pred_binary == target).float()
     accuracy = correct.mean()
 
@@ -150,18 +142,14 @@ def sensitivity(pred: torch.Tensor, target: torch.Tensor,
         >>> print(f"Sensitivity: {sens:.3f}")
         Sensitivity: 1.000
     """
-    # Binarize predictions
     pred_binary = (pred > threshold).float()
 
-    # Flatten
     pred_binary = pred_binary.view(pred_binary.size(0), -1)
     target = target.view(target.size(0), -1)
 
-    # True Positives and actual Positives
     tp = (pred_binary * target).sum(dim=1)
     actual_positive = target.sum(dim=1)
 
-    # Sensitivity
     sens = (tp + smooth) / (actual_positive + smooth)
 
     return sens.mean()
@@ -192,18 +180,14 @@ def specificity(pred: torch.Tensor, target: torch.Tensor,
         >>> print(f"Specificity: {spec:.3f}")
         Specificity: 1.000
     """
-    # Binarize predictions
     pred_binary = (pred > threshold).float()
 
-    # Flatten
     pred_binary = pred_binary.view(pred_binary.size(0), -1)
     target = target.view(target.size(0), -1)
 
-    # True Negatives and actual Negatives
     tn = ((1 - pred_binary) * (1 - target)).sum(dim=1)
     actual_negative = (1 - target).sum(dim=1)
 
-    # Specificity
     spec = (tn + smooth) / (actual_negative + smooth)
 
     return spec.mean()
@@ -254,7 +238,6 @@ class SegmentationMetrics:
 
 
 if __name__ == "__main__":
-    # Quick test
     pred = torch.rand(4, 1, 128, 128)
     target = torch.randint(0, 2, (4, 1, 128, 128)).float()
 

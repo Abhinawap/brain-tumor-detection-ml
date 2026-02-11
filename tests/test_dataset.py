@@ -22,21 +22,17 @@ class TestBrainTumorDataset:
     @pytest.fixture
     def mock_dataset_dir(self, tmp_path):
         """Create a mock dataset directory structure."""
-        # Create directory structure
         for class_idx in [0, 1, 2, 3]:
             (tmp_path / 'image' / str(class_idx)).mkdir(parents=True)
             (tmp_path / 'mask' / str(class_idx)).mkdir(parents=True)
 
-        # Create dummy images
         import cv2
-        for class_idx in [1, 2, 3]:  # Create a few samples
+        for class_idx in [1, 2, 3]:
             for i in range(3):
-                # Image
                 img = np.random.randint(0, 255, (128, 128, 3), dtype=np.uint8)
                 img_path = tmp_path / 'image' / str(class_idx) / f'test_{i}.jpg'
                 cv2.imwrite(str(img_path), img)
 
-                # Mask
                 mask = np.random.randint(0, 2, (128, 128), dtype=np.uint8) * 255
                 mask_path = tmp_path / 'mask' / str(class_idx) / f'test_{i}.jpg'
                 cv2.imwrite(str(mask_path), mask)
@@ -51,8 +47,8 @@ class TestBrainTumorDataset:
             classes=[1, 2, 3]
         )
 
-        assert len(dataset) == 9  # 3 classes × 3 samples
-
+        assert len(dataset) == 9  
+        
     def test_dataset_length(self, mock_dataset_dir):
         """Test dataset __len__ method."""
         dataset = BrainTumorDataset(
@@ -61,7 +57,7 @@ class TestBrainTumorDataset:
             classes=[1, 2]
         )
 
-        assert len(dataset) == 6  # 2 classes × 3 samples
+        assert len(dataset) == 6  
 
     def test_dataset_getitem(self, mock_dataset_dir):
         """Test dataset __getitem__ method."""
@@ -73,15 +69,15 @@ class TestBrainTumorDataset:
 
         image, mask = dataset[0]
 
-        # Check types
+        
         assert isinstance(image, torch.Tensor)
         assert isinstance(mask, torch.Tensor)
 
-        # Check shapes
+        
         assert image.shape == (3, 128, 128)
         assert mask.shape == (1, 128, 128)
 
-        # Check dtypes
+        
         assert image.dtype == torch.float32
         assert mask.dtype == torch.float32
 
@@ -95,7 +91,7 @@ class TestBrainTumorDataset:
 
         image, mask = dataset[0]
 
-        # Image should be in [0, 1]
+        
         assert image.min() >= 0.0
         assert image.max() <= 1.0
 
@@ -109,7 +105,7 @@ class TestBrainTumorDataset:
 
         image, mask = dataset[0]
 
-        # Mask should only contain 0 and 1
+        
         unique_values = mask.unique().tolist()
         assert all(val in [0.0, 1.0] for val in unique_values)
 
@@ -137,14 +133,14 @@ class TestBrainTumorDataset:
 
         dist = dataset.get_class_distribution()
 
-        # Should have 3 samples per class
+        
         assert dist[1] == 3
         assert dist[2] == 3
         assert dist[3] == 3
 
     def test_dataset_empty_raises_error(self, tmp_path):
         """Test that empty dataset raises error."""
-        # Create empty directory structure
+        
         (tmp_path / 'image' / '1').mkdir(parents=True)
         (tmp_path / 'mask' / '1').mkdir(parents=True)
 
@@ -163,12 +159,10 @@ class TestBrainTumorDatasetWithAugmentation:
         """Create a mock dataset directory structure."""
         import cv2
 
-        # Create directory structure
         for class_idx in [1, 2, 3]:
             (tmp_path / 'image' / str(class_idx)).mkdir(parents=True)
             (tmp_path / 'mask' / str(class_idx)).mkdir(parents=True)
 
-            # Create a few samples
             for i in range(3):
                 img = np.random.randint(0, 255, (128, 128, 3), dtype=np.uint8)
                 img_path = tmp_path / 'image' / str(class_idx) / f'test_{i}.jpg'
@@ -198,11 +192,9 @@ class TestBrainTumorDatasetWithAugmentation:
             augment=False
         )
 
-        # Get same sample twice
         image1, mask1 = dataset[0]
         image2, mask2 = dataset[0]
 
-        # Should be identical when augmentation is off
         assert torch.allclose(image1, image2)
         assert torch.allclose(mask1, mask2)
 
@@ -211,19 +203,15 @@ class TestBrainTumorDatasetWithAugmentation:
         dataset = BrainTumorDatasetWithAugmentation(
             data_dir=str(mock_dataset_dir),
             augment=True,
-            aug_prob=1.0  # Force augmentation
+            aug_prob=1.0 
         )
 
-        # Get same sample multiple times
         samples = [dataset[0] for _ in range(5)]
 
-        # At least some should be different due to augmentation
-        # (with aug_prob=1.0, all augmentations apply, so outputs will differ)
         images = [s[0] for s in samples]
 
-        # Check that not all images are identical
         all_same = all(torch.allclose(images[0], img) for img in images[1:])
-        assert not all_same  # Should have variation due to augmentation
+        assert not all_same
 
     def test_augmentation_preserves_shape(self, mock_dataset_dir):
         """Test that augmentation preserves tensor shapes."""
@@ -274,10 +262,8 @@ class TestDatasetIntegration:
 
         loader = DataLoader(dataset, batch_size=4, shuffle=True)
 
-        # Get one batch
         images, masks = next(iter(loader))
 
-        # Check batch dimensions
         assert images.shape == (4, 3, 128, 128)
         assert masks.shape == (4, 1, 128, 128)
 
