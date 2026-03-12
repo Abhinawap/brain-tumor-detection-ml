@@ -43,16 +43,9 @@ End-to-end PyTorch pipeline for brain tumor segmentation and classification from
 *Smooth convergence with no overfitting. Training loss: 0.021 | Validation loss: 0.074*
 </details>
 
-## 🌟 Project Highlights
+## What this project covers
 
-This project demonstrates **production ML engineering practices**:
-
-- **🔬 Research to Production**: Transformed academic notebook into modular, tested codebase
-- **📊 Experiment Tracking**: Complete MLflow integration with automated metric logging
-- **🧪 Test Coverage**: Comprehensive pytest suite for data, models, and metrics
-- **📈 Strong Performance**: 87.95% Dice coefficient on brain tumor segmentation
-- **📓 Reproducibility**: Documented training process with example notebooks
-- **🔄 CI/CD**: Automated testing with GitHub Actions on every commit
+Started as a Pattern Recognition course project, then refactored into a proper package. The main engineering work: modular PyTorch pipeline, MLflow experiment tracking, a pytest suite covering data loading, model forward passes, and metric calculations, and GitHub Actions CI that runs on every push.
 
 ## Tech Stack
 
@@ -62,7 +55,7 @@ This project demonstrates **production ML engineering practices**:
 - **Testing:** pytest with coverage
 - **CI/CD:** GitHub Actions (planned)
 
-## 📁 Project Structure
+## Project structure
 
 ```
 brain-tumor-segmentation/
@@ -80,7 +73,7 @@ brain-tumor-segmentation/
 Original research: archive/original-notebooks branch
 ```
 
-## 🚀 Quick Start
+## Quick start
 
 ```bash
 # Clone
@@ -116,7 +109,7 @@ The notebook demonstrates:
 
 ![Inference Example](docs/inference_examples/sample_1685_dice0.973.png)
 
-## 🧪 Development Status
+## Development status
 
 **Current Phase:** ✅ Segmentation pipeline complete  
 **Next Milestone:** Create inference demo notebook + feature extraction module  
@@ -124,34 +117,28 @@ The notebook demonstrates:
 
 ### Roadmap
 
-- [x] Preprocessing pipeline (Wiener, CLAHE, cropping) ✅
-- [x] PyTorch U-Net architecture ✅
-- [x] Custom metrics (Dice, IoU) & losses ✅
-- [x] Training script with MLflow ✅
-- [x] Unit tests (pytest) ✅
-- [x] Inference demo notebook ✅
-- [x] Example visualizations ✅
-- [x] GitHub Actions CI/CD ✅
+- [x] Preprocessing pipeline (Wiener, CLAHE, cropping)
+- [x] PyTorch U-Net architecture
+- [x] Custom metrics (Dice, IoU) & losses
+- [x] Training script with MLflow
+- [x] Unit tests (pytest)
+- [x] Inference demo notebook
+- [x] Example visualizations
+- [x] GitHub Actions CI/CD
 - [ ] Feature extraction module
 - [ ] Classification pipeline
 
-## Academic Context
+## Academic context
 
-This project evolved from a Pattern Recognition course final project (June 2025).
-
-**Refactoring demonstrates:**
-- Research-to-production code transformation
-- ML engineering best practices
-- Experiment tracking and reproducibility
-- Comprehensive testing and CI/CD
+Started as a Pattern Recognition course final project (June 2025). The refactoring was mainly about taking working notebook code and reorganizing it into a testable, reproducible package with proper experiment tracking.
 
 **Original academic notebooks:** [`archive/original-notebooks`](../../tree/archive/original-notebooks)
 
-## 📄 License
+## License
 
 MIT
 
 ---
 
 **Last Updated:** February 11, 2026 
-**Status:** ✅ Segmentation pipeline functional | 🚧 Classification pipeline in development
+**Status:** Segmentation pipeline complete | Classification pipeline in development

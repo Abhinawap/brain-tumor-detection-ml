@@ -271,7 +271,7 @@ if __name__ == "__main__":
         dist = dataset.get_class_distribution()
         print(f"Class distribution: {dist}")
 
-        print("✓ Dataset module loaded successfully!")
+        print("Dataset module loaded successfully.")
     else:
         print(f"Data directory not found: {data_dir}")
         print("Dataset module loaded (untested)")

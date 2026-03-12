@@ -18,8 +18,7 @@ def apply_wiener_filter(img: np.ndarray) -> np.ndarray:
     """
     Apply Wiener-like filtering using OpenCV's fastNlMeansDenoising.
 
-    This function reduces noise while preserving edges, which is crucial
-    for accurate brain region detection and tumor segmentation.
+    Reduces noise while preserving edges.
 
     Args:
         img: Input BGR image of shape (H, W, 3)
@@ -71,9 +70,6 @@ def normalize_image(img: np.ndarray) -> np.ndarray:
     """
     Normalize image pixel values to [0, 1] range.
 
-    This standardization is essential for neural network training,
-    ensuring consistent input scales across all images.
-
     Args:
         img: Input image of shape (H, W, C) with values in [0, 255]
 
@@ -94,9 +90,8 @@ def crop_brain_region(img: np.ndarray, mask: Optional[np.ndarray] = None,
     """
     Crop the brain region from MRI scan using contour detection.
 
-    This function removes black borders and focuses on the brain region,
-    reducing noise and computational requirements. It uses thresholding
-    and morphological operations to find the largest contour (brain).
+    Removes black borders using thresholding and morphological operations
+    to find the largest contour.
 
     Args:
         img: Input BGR image of shape (H, W, 3)

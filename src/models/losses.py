@@ -19,8 +19,8 @@ class DiceLoss(nn.Module):
 
     Dice Loss = 1 - Dice Coefficient
 
-    This loss directly optimizes the Dice coefficient, making it ideal
-    for segmentation tasks where class imbalance is present (e.g., small tumors).
+    Directly optimizes the Dice coefficient, so it handles class imbalance
+    better than BCE alone.
 
     Args:
         smooth: Smoothing constant to avoid division by zero (default: 1e-7)
@@ -31,7 +31,6 @@ class DiceLoss(nn.Module):
         >>> target = torch.randint(0, 2, (4, 1, 128, 128)).float()
         >>> loss = criterion(pred, target)
         >>> print(f"Dice Loss: {loss.item():.4f}")
-        Dice Loss: 0.4523
     """
 
     def __init__(self, smooth: float = 1e-7):
@@ -68,12 +67,8 @@ class BCEDiceLoss(nn.Module):
 
     Loss = α * BCE + (1 - α) * Dice
 
-    This combined loss leverages:
-    - BCE: Pixel-wise classification accuracy
-    - Dice: Region overlap optimization
-
-    The combination provides both pixel-level and region-level guidance,
-    leading to better segmentation, especially for small objects.
+    Combines pixel-level (BCE) and region-level (Dice) gradients.
+    Generally outperforms either loss alone on small object segmentation.
 
     Args:
         alpha: Weight for BCE loss (default: 0.5)
@@ -88,7 +83,6 @@ class BCEDiceLoss(nn.Module):
         >>> target = torch.randint(0, 2, (4, 1, 128, 128)).float()
         >>> loss = criterion(pred, target)
         >>> print(f"Combined Loss: {loss.item():.4f}")
-        Combined Loss: 0.6234
     """
 
     def __init__(self, alpha: float = 0.5, smooth: float = 1e-7):
@@ -140,7 +134,6 @@ class FocalLoss(nn.Module):
         >>> target = torch.randint(0, 2, (4, 1, 128, 128)).float()
         >>> loss = criterion(pred, target)
         >>> print(f"Focal Loss: {loss.item():.4f}")
-        Focal Loss: 0.1234
     """
 
     def __init__(self, alpha: float = 0.25, gamma: float = 2.0):
@@ -223,4 +216,4 @@ if __name__ == "__main__":
     criterion = get_loss_function('bce_dice', alpha=0.7)
     print(f"  Factory: {type(criterion).__name__}")
 
-    print("✓ Losses module loaded successfully!")
+    print("Losses module loaded.")

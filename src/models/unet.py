@@ -251,4 +251,4 @@ if __name__ == "__main__":
     print(f"Output shape: {output.shape}")
     print(f"Output range: [{output.min():.3f}, {output.max():.3f}]")
     print(f"Total parameters: {model.count_parameters():,}")
-    print("✓ U-Net model loaded successfully!")
+    print("U-Net model loaded successfully.")

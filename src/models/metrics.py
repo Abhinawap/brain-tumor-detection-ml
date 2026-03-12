@@ -124,7 +124,6 @@ def sensitivity(pred: torch.Tensor, target: torch.Tensor,
     Sensitivity = TP / (TP + FN)
 
     Measures the proportion of actual positives correctly identified.
-    Important for medical imaging to avoid missing tumors.
 
     Args:
         pred: Predicted mask of shape (batch_size, 1, H, W) with values in [0, 1]
@@ -248,4 +247,4 @@ if __name__ == "__main__":
     for metric_name, value in results.items():
         print(f"  {metric_name}: {value:.4f}")
 
-    print("✓ Metrics module loaded successfully!")
+    print("Metrics module loaded.")
