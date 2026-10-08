@@ -1,8 +1,3 @@
-# MLflow Experiments
+# Experiments
 
-Training scripts with experiment tracking will go here.
-
-Planned scripts:
-- train_segmentation.py - Train U-Net model
-- train_classifier.py - Train Gradient Boosting classifier
-
+- `train_segmentation.py` - trains the U-Net with MLflow tracking on a seeded train/val/test split, then evaluates the best checkpoint once on the test split. Run `python experiments/train_segmentation.py --help` for options.
