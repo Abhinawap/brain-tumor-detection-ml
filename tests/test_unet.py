@@ -5,12 +5,11 @@ Tests cover:
 - U-Net architecture forward pass
 - Model parameter count
 - Segmentation metrics (Dice, IoU, accuracy, etc.)
-- Loss functions (Dice, BCE+Dice, Focal)
+- Loss functions (Dice, BCE+Dice)
 """
 
 import pytest
 import torch
-import torch.nn as nn
 from src.models.unet import UNet, ConvBlock, EncoderBlock, DecoderBlock
 from src.models.metrics import (
     dice_coefficient, 
@@ -20,7 +19,7 @@ from src.models.metrics import (
     specificity,
     SegmentationMetrics
 )
-from src.models.losses import DiceLoss, BCEDiceLoss, FocalLoss, get_loss_function
+from src.models.losses import DiceLoss, BCEDiceLoss
 
 
 class TestUNetArchitecture:
@@ -189,6 +188,16 @@ class TestSegmentationMetrics:
         for value in results.values():
             assert 0.0 <= value <= 1.0
 
+    def test_segmentation_metrics_thresholds_dice(self):
+        """Container Dice/IoU use the thresholded mask, like the other metrics."""
+        pred = torch.full((1, 1, 4, 4), 0.6)
+        target = torch.ones(1, 1, 4, 4)
+
+        results = SegmentationMetrics(threshold=0.5)(pred, target)
+
+        assert abs(results['dice'] - 1.0) < 1e-5  # soft Dice would be 0.75
+        assert abs(results['iou'] - 1.0) < 1e-5
+
 
 class TestLossFunctions:
     """Tests for loss functions."""
@@ -236,28 +245,6 @@ class TestLossFunctions:
         assert not torch.isclose(loss_0, loss_5)
         assert not torch.isclose(loss_5, loss_1)
 
-    def test_focal_loss(self):
-        """Test Focal loss."""
-        criterion = FocalLoss(alpha=0.25, gamma=2.0)
-        pred = torch.rand(2, 1, 64, 64)
-        target = torch.randint(0, 2, (2, 1, 64, 64)).float()
-
-        loss = criterion(pred, target)
-
-        assert loss.ndim == 0
-        assert loss > 0
-
-    def test_loss_factory(self):
-        """Test loss function factory."""
-        for loss_name in ['bce', 'dice', 'bce_dice', 'focal']:
-            criterion = get_loss_function(loss_name)
-            assert criterion is not None
-
-    def test_loss_factory_invalid(self):
-        """Test loss factory with invalid name."""
-        with pytest.raises(ValueError):
-            get_loss_function('invalid_loss')
-
 
 class TestIntegration:
     """Integration tests for complete pipeline."""
@@ -295,7 +282,3 @@ class TestIntegration:
 
         assert len(results) == 5
         assert all(0 <= v <= 1 for v in results.values())
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

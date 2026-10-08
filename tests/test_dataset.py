@@ -3,41 +3,39 @@ Unit tests for PyTorch Dataset classes.
 
 Tests cover:
 - Dataset initialization and loading
-- Data transformations
 - Augmentations
 - Tensor shapes and types
 """
 
 import pytest
 import torch
+import cv2
 import numpy as np
-from pathlib import Path
-from unittest.mock import Mock, patch
-from src.data.dataset import BrainTumorDataset, BrainTumorDatasetWithAugmentation
+from src.data.dataset import BrainTumorDataset
+
+
+@pytest.fixture
+def mock_dataset_dir(tmp_path):
+    """Create a mock dataset directory structure."""
+    for class_idx in [0, 1, 2, 3]:
+        (tmp_path / 'image' / str(class_idx)).mkdir(parents=True)
+        (tmp_path / 'mask' / str(class_idx)).mkdir(parents=True)
+
+    for class_idx in [1, 2, 3]:
+        for i in range(3):
+            img = np.random.randint(0, 255, (128, 128, 3), dtype=np.uint8)
+            img_path = tmp_path / 'image' / str(class_idx) / f'test_{i}.jpg'
+            cv2.imwrite(str(img_path), img)
+
+            mask = np.random.randint(0, 2, (128, 128), dtype=np.uint8) * 255
+            mask_path = tmp_path / 'mask' / str(class_idx) / f'test_{i}.jpg'
+            cv2.imwrite(str(mask_path), mask)
+
+    return tmp_path
 
 
 class TestBrainTumorDataset:
     """Tests for BrainTumorDataset."""
-
-    @pytest.fixture
-    def mock_dataset_dir(self, tmp_path):
-        """Create a mock dataset directory structure."""
-        for class_idx in [0, 1, 2, 3]:
-            (tmp_path / 'image' / str(class_idx)).mkdir(parents=True)
-            (tmp_path / 'mask' / str(class_idx)).mkdir(parents=True)
-
-        import cv2
-        for class_idx in [1, 2, 3]:
-            for i in range(3):
-                img = np.random.randint(0, 255, (128, 128, 3), dtype=np.uint8)
-                img_path = tmp_path / 'image' / str(class_idx) / f'test_{i}.jpg'
-                cv2.imwrite(str(img_path), img)
-
-                mask = np.random.randint(0, 2, (128, 128), dtype=np.uint8) * 255
-                mask_path = tmp_path / 'mask' / str(class_idx) / f'test_{i}.jpg'
-                cv2.imwrite(str(mask_path), mask)
-
-        return tmp_path
 
     def test_dataset_initialization(self, mock_dataset_dir):
         """Test dataset can be initialized."""
@@ -151,32 +149,12 @@ class TestBrainTumorDataset:
             )
 
 
-class TestBrainTumorDatasetWithAugmentation:
-    """Tests for BrainTumorDatasetWithAugmentation."""
-
-    @pytest.fixture
-    def mock_dataset_dir(self, tmp_path):
-        """Create a mock dataset directory structure."""
-        import cv2
-
-        for class_idx in [1, 2, 3]:
-            (tmp_path / 'image' / str(class_idx)).mkdir(parents=True)
-            (tmp_path / 'mask' / str(class_idx)).mkdir(parents=True)
-
-            for i in range(3):
-                img = np.random.randint(0, 255, (128, 128, 3), dtype=np.uint8)
-                img_path = tmp_path / 'image' / str(class_idx) / f'test_{i}.jpg'
-                cv2.imwrite(str(img_path), img)
-
-                mask = np.random.randint(0, 2, (128, 128), dtype=np.uint8) * 255
-                mask_path = tmp_path / 'mask' / str(class_idx) / f'test_{i}.jpg'
-                cv2.imwrite(str(mask_path), mask)
-
-        return tmp_path
+class TestAugmentation:
+    """Tests for BrainTumorDataset augmentation."""
 
     def test_augmented_dataset_initialization(self, mock_dataset_dir):
         """Test augmented dataset initialization."""
-        dataset = BrainTumorDatasetWithAugmentation(
+        dataset = BrainTumorDataset(
             data_dir=str(mock_dataset_dir),
             augment=True,
             aug_prob=0.5
@@ -187,7 +165,7 @@ class TestBrainTumorDatasetWithAugmentation:
 
     def test_augmentation_disabled(self, mock_dataset_dir):
         """Test that augmentation can be disabled."""
-        dataset = BrainTumorDatasetWithAugmentation(
+        dataset = BrainTumorDataset(
             data_dir=str(mock_dataset_dir),
             augment=False
         )
@@ -200,7 +178,7 @@ class TestBrainTumorDatasetWithAugmentation:
 
     def test_augmentation_enabled(self, mock_dataset_dir):
         """Test that augmentation produces different outputs."""
-        dataset = BrainTumorDatasetWithAugmentation(
+        dataset = BrainTumorDataset(
             data_dir=str(mock_dataset_dir),
             augment=True,
             aug_prob=1.0 
@@ -215,7 +193,7 @@ class TestBrainTumorDatasetWithAugmentation:
 
     def test_augmentation_preserves_shape(self, mock_dataset_dir):
         """Test that augmentation preserves tensor shapes."""
-        dataset = BrainTumorDatasetWithAugmentation(
+        dataset = BrainTumorDataset(
             data_dir=str(mock_dataset_dir),
             augment=True,
             aug_prob=1.0
@@ -229,26 +207,6 @@ class TestBrainTumorDatasetWithAugmentation:
 
 class TestDatasetIntegration:
     """Integration tests for Dataset with DataLoader."""
-
-    @pytest.fixture
-    def mock_dataset_dir(self, tmp_path):
-        """Create mock dataset."""
-        import cv2
-
-        for class_idx in [1, 2]:
-            (tmp_path / 'image' / str(class_idx)).mkdir(parents=True)
-            (tmp_path / 'mask' / str(class_idx)).mkdir(parents=True)
-
-            for i in range(5):
-                img = np.random.randint(0, 255, (128, 128, 3), dtype=np.uint8)
-                img_path = tmp_path / 'image' / str(class_idx) / f'test_{i}.jpg'
-                cv2.imwrite(str(img_path), img)
-
-                mask = np.random.randint(0, 2, (128, 128), dtype=np.uint8) * 255
-                mask_path = tmp_path / 'mask' / str(class_idx) / f'test_{i}.jpg'
-                cv2.imwrite(str(mask_path), mask)
-
-        return tmp_path
 
     def test_dataloader_integration(self, mock_dataset_dir):
         """Test dataset works with PyTorch DataLoader."""
@@ -283,7 +241,3 @@ class TestDatasetIntegration:
             total_samples += images.shape[0]
 
         assert total_samples == len(dataset)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

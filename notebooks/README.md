@@ -1,12 +1,5 @@
 # Demo Notebooks
 
-Polished demonstration notebooks showing how to use the production code.
+- `demo_segmentation.ipynb` - loads the trained checkpoint, evaluates it on the held-out test split, plots the training curves and saves the worst/median/best examples to `docs/`.
 
-**NOT** for research experiments - those are in the archive/original-notebooks branch.
-
-Planned notebooks:
-- 01_demo_pipeline.ipynb - Quick usage demonstration
-- 02_visualize_results.ipynb - Visualizations and metrics
-
-These will be added in Week 2-3 of refactoring.
-
+Original research notebooks are on the `archive/original-notebooks` branch.

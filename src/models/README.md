@@ -1,9 +1,5 @@
 # Models Module
 
-PyTorch U-Net architecture and model components.
-
-Planned modules:
-- unet.py - U-Net architecture with encoder/decoder
-- metrics.py - Dice coefficient, IoU, sensitivity
-- losses.py - Combined BCE + Dice loss
-
+- `unet.py` - U-Net encoder/decoder with sigmoid output
+- `metrics.py` - Dice, IoU, pixel accuracy, sensitivity, specificity (`SegmentationMetrics` thresholds predictions at 0.5 for all of them)
+- `losses.py` - Dice and BCE + Dice losses
