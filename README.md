@@ -15,7 +15,7 @@ PyTorch pipeline for brain tumor segmentation on 2D MRI slices: a U-Net trained 
 
 **Pipeline:** MRI slice → resize to 128×128 → U-Net → tumor mask
 
-`src/data/preprocessing.py` (Wiener-style denoising, CLAHE, cropping from the course project) is tested but not used in U-Net training.
+No denoising or contrast enhancement is applied; the course project's preprocessing (Wiener-style denoising, CLAHE, cropping) is on the `archive/original-notebooks` branch.
 
 **Data:** 2,349 2D MRI slices with tumor masks (glioma 649, meningioma 999, pituitary 701). 293 pituitary images ship without a mask and are skipped; the no-tumor class is excluded.
 
@@ -69,7 +69,7 @@ Started as a Pattern Recognition course project, then refactored into a proper p
 ```
 brain-tumor-detection-ml/
 ├── src/
-│   ├── data/              # Dataset + augmentation; standalone preprocessing module
+│   ├── data/              # Dataset + augmentation
 │   └── models/            # PyTorch U-Net, metrics, losses
 ├── experiments/           # MLflow training script
 ├── tests/                 # Unit tests (pytest)
@@ -86,7 +86,7 @@ Original research: archive/original-notebooks branch
 git clone https://github.com/Abhinawap/brain-tumor-detection-ml.git
 cd brain-tumor-detection-ml
 
-# Install dependencies
+# Install dependencies (requirements-dev.txt adds pytest and Jupyter)
 pip install -r requirements.txt
 
 # Train model (seeded split; evaluates the best checkpoint on the test split at the end)
@@ -139,7 +139,6 @@ mlflow ui
 
 ### Roadmap
 
-- [x] Preprocessing module (Wiener, CLAHE, cropping), not yet used in training
 - [x] PyTorch U-Net architecture
 - [x] Custom metrics (Dice, IoU) & losses
 - [x] Training script with MLflow

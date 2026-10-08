@@ -28,7 +28,7 @@ import mlflow
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.data.dataset import BrainTumorDatasetWithAugmentation
+from src.data.dataset import BrainTumorDataset
 from src.models.unet import UNet
 from src.models.metrics import SegmentationMetrics
 from src.models.losses import BCEDiceLoss
@@ -98,7 +98,6 @@ class MLflowTrainer:
         """
         self.model.train()
         total_loss = 0.0
-        batch_losses = []
 
         pbar = tqdm(self.train_loader, desc=f'Epoch {epoch+1} [Train]')
         for batch_idx, (images, masks) in enumerate(pbar):
@@ -116,7 +115,6 @@ class MLflowTrainer:
 
             # Update metrics
             total_loss += loss.item()
-            batch_losses.append(loss.item())
             pbar.set_postfix({'loss': f'{loss.item():.4f}'})
 
             # Log batch metrics to MLflow
@@ -231,14 +229,9 @@ class MLflowTrainer:
             self.history['val_dice'].append(val_metrics['dice'])
             self.history['val_iou'].append(val_metrics['iou'])
 
-            mlflow.log_metric('train_loss', train_loss, step=epoch)
-            mlflow.log_metric('val_loss', val_metrics['loss'], step=epoch)
-            mlflow.log_metric('val_dice', val_metrics['dice'], step=epoch)
-            mlflow.log_metric('val_iou', val_metrics['iou'], step=epoch)
-            mlflow.log_metric('val_accuracy', val_metrics['accuracy'], step=epoch)
-            mlflow.log_metric('val_sensitivity', val_metrics['sensitivity'], step=epoch)
-            mlflow.log_metric('val_specificity', val_metrics['specificity'], step=epoch)
- 
+            mlflow.log_metrics({'train_loss': train_loss,
+                                **{f'val_{k}': v for k, v in val_metrics.items()}}, step=epoch)
+
             print(f"\nEpoch {epoch+1}/{num_epochs}")
             print(f"  Train Loss: {train_loss:.4f}")
             print(f"  Val Loss:   {val_metrics['loss']:.4f}")
@@ -284,10 +277,7 @@ def main():
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed for split and training (default: 42)')
 
-    # Model arguments
-    parser.add_argument('--loss', type=str, default='bce_dice',
-                        choices=['bce', 'dice', 'bce_dice', 'focal'],
-                        help='Loss function (default: bce_dice)')
+    # Loss arguments
     parser.add_argument('--alpha', type=float, default=0.5,
                         help='Alpha for BCE+Dice loss (default: 0.5)')
 
@@ -321,47 +311,24 @@ def main():
     # Generate run name if not provided
     if args.run_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        args.run_name = f"unet_{args.loss}_ep{args.epochs}_bs{args.batch_size}_{timestamp}"
+        args.run_name = f"unet_bce_dice_ep{args.epochs}_bs{args.batch_size}_{timestamp}"
 
     # Start MLflow run
     with mlflow.start_run(run_name=args.run_name):
         # Log parameters
-        mlflow.log_param('data_dir', args.data_dir)
-        mlflow.log_param('image_size', args.image_size)
-        mlflow.log_param('classes', args.classes)
-        mlflow.log_param('epochs', args.epochs)
-        mlflow.log_param('batch_size', args.batch_size)
-        mlflow.log_param('learning_rate', args.lr)
-        mlflow.log_param('val_split', args.val_split)
-        mlflow.log_param('test_split', args.test_split)
-        mlflow.log_param('seed', args.seed)
-        mlflow.log_param('loss_function', args.loss)
-        mlflow.log_param('alpha', args.alpha)
-        mlflow.log_param('device', device)
-        mlflow.log_param('optimizer', 'Adam')
+        mlflow.log_params({**vars(args), 'device': device,
+                           'loss_function': 'bce_dice', 'optimizer': 'Adam'})
 
         # Load dataset twice over the same files: augmented for training, plain for evaluation
         print(f"\nLoading dataset from {args.data_dir}")
-        train_ds = BrainTumorDatasetWithAugmentation(
-            data_dir=args.data_dir,
-            image_size=args.image_size,
-            classes=args.classes,
-            augment=True
-        )
-        eval_ds = BrainTumorDatasetWithAugmentation(
-            data_dir=args.data_dir,
-            image_size=args.image_size,
-            classes=args.classes,
-            augment=False
-        )
+        train_ds = BrainTumorDataset(args.data_dir, args.image_size, args.classes, augment=True)
+        eval_ds = BrainTumorDataset(args.data_dir, args.image_size, args.classes, augment=False)
 
         print(f"Total samples: {len(train_ds)}")
         dist = train_ds.get_class_distribution()
         print(f"Class distribution: {dist}")
 
         # Log dataset info
-        mlflow.log_param('total_samples', len(train_ds))
-        mlflow.log_param('class_distribution', str(dist))
 
         # Seeded train / val / test split
         n = len(train_ds)
@@ -377,34 +344,19 @@ def main():
         val_dataset = Subset(eval_ds, split['val'])
         test_dataset = Subset(eval_ds, split['test'])
 
-        mlflow.log_param('train_samples', len(train_dataset))
-        mlflow.log_param('val_samples', len(val_dataset))
-        mlflow.log_param('test_samples', len(test_dataset))
+        mlflow.log_params({'total_samples': n, 'class_distribution': str(dist),
+                           'train_samples': len(train_dataset),
+                           'val_samples': len(val_dataset),
+                           'test_samples': len(test_dataset)})
 
         # Create data loaders
-        train_loader = DataLoader(
-            train_dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.workers,
-            pin_memory=True if device == 'cuda' else False
-        )
+        def make_loader(ds, shuffle):
+            return DataLoader(ds, batch_size=args.batch_size, shuffle=shuffle,
+                              num_workers=args.workers, pin_memory=device == 'cuda')
 
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.workers,
-            pin_memory=True if device == 'cuda' else False
-        )
-
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.workers,
-            pin_memory=True if device == 'cuda' else False
-        )
+        train_loader = make_loader(train_dataset, shuffle=True)
+        val_loader = make_loader(val_dataset, shuffle=False)
+        test_loader = make_loader(test_dataset, shuffle=False)
 
         # Create model
         print(f"\nInitializing U-Net model")
@@ -414,11 +366,7 @@ def main():
         mlflow.log_param('model_parameters', param_count)
 
         # Loss function
-        if args.loss == 'bce_dice':
-            criterion = BCEDiceLoss(alpha=args.alpha)
-        else:
-            from src.models.losses import get_loss_function
-            criterion = get_loss_function(args.loss)
+        criterion = BCEDiceLoss(alpha=args.alpha)
 
         # Optimizer
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)

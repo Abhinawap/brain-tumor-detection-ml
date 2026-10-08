@@ -240,15 +240,3 @@ class UNet(nn.Module):
     def count_parameters(self) -> int:
         """Count total number of trainable parameters."""
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
-
-
-if __name__ == "__main__":
-    model = UNet(in_channels=3, out_channels=1)
-    x = torch.randn(2, 3, 128, 128)
-
-    print(f"Input shape: {x.shape}")
-    output = model(x)
-    print(f"Output shape: {output.shape}")
-    print(f"Output range: [{output.min():.3f}, {output.max():.3f}]")
-    print(f"Total parameters: {model.count_parameters():,}")
-    print("U-Net model loaded successfully.")

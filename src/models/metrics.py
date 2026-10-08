@@ -8,13 +8,11 @@ This module provides common segmentation metrics:
 - Sensitivity (Recall)
 - Specificity
 
-All metrics support both binary and multi-class segmentation.
+All metrics are for binary segmentation masks.
 
 """
 
 import torch
-import torch.nn.functional as F
-from typing import Optional
 
 
 def dice_coefficient(pred: torch.Tensor, target: torch.Tensor, 
@@ -236,17 +234,3 @@ class SegmentationMetrics:
             'sensitivity': sensitivity(pred, target, self.threshold).item(),
             'specificity': specificity(pred, target, self.threshold).item()
         }
-
-
-if __name__ == "__main__":
-    pred = torch.rand(4, 1, 128, 128)
-    target = torch.randint(0, 2, (4, 1, 128, 128)).float()
-
-    metrics = SegmentationMetrics()
-    results = metrics(pred, target)
-
-    print("Segmentation Metrics Test:")
-    for metric_name, value in results.items():
-        print(f"  {metric_name}: {value:.4f}")
-
-    print("Metrics module loaded.")
