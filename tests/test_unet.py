@@ -189,6 +189,16 @@ class TestSegmentationMetrics:
         for value in results.values():
             assert 0.0 <= value <= 1.0
 
+    def test_segmentation_metrics_thresholds_dice(self):
+        """Container Dice/IoU use the thresholded mask, like the other metrics."""
+        pred = torch.full((1, 1, 4, 4), 0.6)
+        target = torch.ones(1, 1, 4, 4)
+
+        results = SegmentationMetrics(threshold=0.5)(pred, target)
+
+        assert abs(results['dice'] - 1.0) < 1e-5  # soft Dice would be 0.75
+        assert abs(results['iou'] - 1.0) < 1e-5
+
 
 class TestLossFunctions:
     """Tests for loss functions."""

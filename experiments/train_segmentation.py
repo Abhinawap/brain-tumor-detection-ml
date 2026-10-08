@@ -9,7 +9,7 @@ This script handles:
 - Validation and checkpointing
 
 Usage:
-    python experiments/train_segmentation_mlflow.py --epochs 50 --batch-size 16
+    python experiments/train_segmentation.py --epochs 50 --batch-size 16 --seed 42
 """
 
 import os
@@ -18,9 +18,10 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 import mlflow
 import mlflow.pytorch
@@ -60,7 +61,8 @@ class MLflowTrainer:
         optimizer: torch.optim.Optimizer,
         device: str = 'cuda',
         checkpoint_dir: str = 'models/checkpoints',
-        log_interval: int = 10
+        log_interval: int = 10,
+        split: dict = None
     ):
         self.model = model.to(device)
         self.train_loader = train_loader
@@ -71,6 +73,7 @@ class MLflowTrainer:
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.log_interval = log_interval
+        self.split = split
         
         self.metrics = SegmentationMetrics()
         self.best_val_dice = 0.0
@@ -126,12 +129,14 @@ class MLflowTrainer:
         return avg_loss
 
     @torch.no_grad()
-    def validate(self, epoch: int) -> dict:
+    def validate(self, epoch: int, loader: DataLoader = None, desc: str = 'Val') -> dict:
         """
-        Validate the model.
+        Evaluate the model on a loader (validation loader by default).
 
         Args:
             epoch: Current epoch number
+            loader: Loader to evaluate (default: validation loader)
+            desc: Progress bar label
 
         Returns:
             Dictionary of validation metrics
@@ -146,7 +151,8 @@ class MLflowTrainer:
             'specificity': 0.0
         }
 
-        pbar = tqdm(self.val_loader, desc=f'Epoch {epoch+1} [Val]')
+        loader = loader or self.val_loader
+        pbar = tqdm(loader, desc=f'Epoch {epoch+1} [{desc}]')
         for images, masks in pbar:
             images = images.to(self.device)
             masks = masks.to(self.device)
@@ -159,16 +165,16 @@ class MLflowTrainer:
             batch_metrics = self.metrics(outputs, masks)
 
             
-            total_loss += loss.item()
+            total_loss += loss.item() * images.size(0)
             for key in all_metrics:
-                all_metrics[key] += batch_metrics[key]
+                all_metrics[key] += batch_metrics[key] * images.size(0)
 
             pbar.set_postfix({'dice': f'{batch_metrics["dice"]:.4f}'})
 
         
-        avg_loss = total_loss / len(self.val_loader)
+        avg_loss = total_loss / len(loader.dataset)
         for key in all_metrics:
-            all_metrics[key] /= len(self.val_loader)
+            all_metrics[key] /= len(loader.dataset)
 
         all_metrics['loss'] = avg_loss
         return all_metrics
@@ -187,7 +193,8 @@ class MLflowTrainer:
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'metrics': metrics,
-            'history': self.history
+            'history': self.history,
+            'split': self.split
         }
 
         
@@ -272,8 +279,12 @@ def main():
                         help='Batch size (default: 16)')
     parser.add_argument('--lr', type=float, default=1e-4,
                         help='Learning rate (default: 1e-4)')
-    parser.add_argument('--val-split', type=float, default=0.2,
-                        help='Validation split (default: 0.2)')
+    parser.add_argument('--val-split', type=float, default=0.15,
+                        help='Validation split (default: 0.15)')
+    parser.add_argument('--test-split', type=float, default=0.15,
+                        help='Held-out test split (default: 0.15)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for split and training (default: 42)')
 
     # Model arguments
     parser.add_argument('--loss', type=str, default='bce_dice',
@@ -299,6 +310,9 @@ def main():
 
     args = parser.parse_args()
 
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+
     # Set device
     device = args.device if torch.cuda.is_available() else 'cpu'
     print(f"Using device: {device}")
@@ -321,38 +335,53 @@ def main():
         mlflow.log_param('batch_size', args.batch_size)
         mlflow.log_param('learning_rate', args.lr)
         mlflow.log_param('val_split', args.val_split)
+        mlflow.log_param('test_split', args.test_split)
+        mlflow.log_param('seed', args.seed)
         mlflow.log_param('loss_function', args.loss)
         mlflow.log_param('alpha', args.alpha)
         mlflow.log_param('device', device)
         mlflow.log_param('optimizer', 'Adam')
 
-        # Load dataset
+        # Load dataset twice over the same files: augmented for training, plain for evaluation
         print(f"\nLoading dataset from {args.data_dir}")
-        dataset = BrainTumorDatasetWithAugmentation(
+        train_ds = BrainTumorDatasetWithAugmentation(
             data_dir=args.data_dir,
             image_size=args.image_size,
             classes=args.classes,
             augment=True
         )
+        eval_ds = BrainTumorDatasetWithAugmentation(
+            data_dir=args.data_dir,
+            image_size=args.image_size,
+            classes=args.classes,
+            augment=False
+        )
 
-        print(f"Total samples: {len(dataset)}")
-        dist = dataset.get_class_distribution()
+        print(f"Total samples: {len(train_ds)}")
+        dist = train_ds.get_class_distribution()
         print(f"Class distribution: {dist}")
 
         # Log dataset info
-        mlflow.log_param('total_samples', len(dataset))
+        mlflow.log_param('total_samples', len(train_ds))
         mlflow.log_param('class_distribution', str(dist))
 
-        # Split into train and validation
-        val_size = int(len(dataset) * args.val_split)
-        train_size = len(dataset) - val_size
-        train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+        # Seeded train / val / test split
+        n = len(train_ds)
+        perm = torch.randperm(n, generator=torch.Generator().manual_seed(args.seed)).tolist()
+        val_size = int(n * args.val_split)
+        test_size = int(n * args.test_split)
+        split = {
+            'test': perm[:test_size],
+            'val': perm[test_size:test_size + val_size],
+            'train': perm[test_size + val_size:]
+        }
+        train_dataset = Subset(train_ds, split['train'])
+        val_dataset = Subset(eval_ds, split['val'])
+        test_dataset = Subset(eval_ds, split['test'])
 
-        # Disable augmentation for validation
-        val_dataset.dataset.augment = False
-
-        mlflow.log_param('train_samples', train_size)
-        mlflow.log_param('val_samples', val_size)
+        mlflow.log_param('train_samples', len(train_dataset))
+        mlflow.log_param('val_samples', len(val_dataset))
+        mlflow.log_param('test_samples', len(test_dataset))
 
         # Create data loaders
         train_loader = DataLoader(
@@ -365,6 +394,14 @@ def main():
 
         val_loader = DataLoader(
             val_dataset,
+            batch_size=args.batch_size,
+            shuffle=False,
+            num_workers=args.workers,
+            pin_memory=True if device == 'cuda' else False
+        )
+
+        test_loader = DataLoader(
+            test_dataset,
             batch_size=args.batch_size,
             shuffle=False,
             num_workers=args.workers,
@@ -396,7 +433,8 @@ def main():
             criterion=criterion,
             optimizer=optimizer,
             device=device,
-            checkpoint_dir=args.checkpoint_dir
+            checkpoint_dir=args.checkpoint_dir,
+            split=split
         )
 
         # Train
@@ -404,6 +442,17 @@ def main():
 
         # Log final model artifact
         mlflow.pytorch.log_model(model, "final_model")
+
+        # Evaluate the best checkpoint once on the held-out test set
+        best = torch.load(Path(args.checkpoint_dir) / 'best_model.pth', map_location=device)
+        model.load_state_dict(best['model_state_dict'])
+        test_metrics = trainer.validate(best['epoch'], loader=test_loader, desc='Test')
+        print("\nTest set (best checkpoint, epoch {}):".format(best['epoch'] + 1))
+        for key, value in test_metrics.items():
+            print(f"  {key}: {value:.4f}")
+            mlflow.log_metric(f'test_{key}', value)
+        best['test_metrics'] = test_metrics
+        torch.save(best, Path(args.checkpoint_dir) / 'best_model.pth')
 
         print(f"\n✓ MLflow run completed: {mlflow.active_run().info.run_id}")
         print(f"✓ View results: mlflow ui")

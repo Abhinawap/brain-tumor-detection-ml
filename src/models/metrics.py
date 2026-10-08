@@ -225,8 +225,10 @@ class SegmentationMetrics:
             target: Ground truth mask of shape (batch_size, 1, H, W)
 
         Returns:
-            Dictionary with all metric values
+            Dictionary with all metric values, all computed on the
+            binarized prediction (pred > threshold)
         """
+        pred = (pred > self.threshold).float()
         return {
             'dice': dice_coefficient(pred, target).item(),
             'iou': iou_score(pred, target).item(),
