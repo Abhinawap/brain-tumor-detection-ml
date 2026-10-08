@@ -24,7 +24,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 import mlflow
-import mlflow.pytorch
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -207,7 +206,6 @@ class MLflowTrainer:
             torch.save(checkpoint, best_path)
 
             
-            mlflow.pytorch.log_model(self.model, "best_model")
             print(f'✓ Saved best model (Dice: {metrics["dice"]:.4f})')
 
     def train(self, num_epochs: int):
@@ -440,9 +438,6 @@ def main():
         # Train
         trainer.train(args.epochs)
 
-        # Log final model artifact
-        mlflow.pytorch.log_model(model, "final_model")
-
         # Evaluate the best checkpoint once on the held-out test set
         best = torch.load(Path(args.checkpoint_dir) / 'best_model.pth', map_location=device)
         model.load_state_dict(best['model_state_dict'])
@@ -453,6 +448,10 @@ def main():
             mlflow.log_metric(f'test_{key}', value)
         best['test_metrics'] = test_metrics
         torch.save(best, Path(args.checkpoint_dir) / 'best_model.pth')
+
+        # Log checkpoints as artifacts (the notebook loads the .pth directly)
+        mlflow.log_artifact(str(Path(args.checkpoint_dir) / 'best_model.pth'))
+        mlflow.log_artifact(str(Path(args.checkpoint_dir) / 'latest_checkpoint.pth'))
 
         print(f"\n✓ MLflow run completed: {mlflow.active_run().info.run_id}")
         print(f"✓ View results: mlflow ui")
